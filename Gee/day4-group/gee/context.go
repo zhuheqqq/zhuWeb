@@ -21,6 +21,8 @@ type Context struct {
 	//middleware
 	handlers []HandlerFunc
 	index    int //记录执行到第几个中间件
+
+	engine *Engine
 }
 
 // 创建实例
@@ -82,10 +84,12 @@ func (c *Context) Data(code int, data []byte) {
 }
 
 // 返回html格式的http响应
-func (c *Context) HTML(code int, html string) {
+func (c *Context) HTML(code int, name string, data interface{}) {
 	c.SetHeader("Content-Type", "text/html")
 	c.Status(code)
-	c.Writer.Write([]byte(html))
+	if err := c.engine.htmlTemplates.ExecuteTemplate(c.Writer, name, data); err != nil {
+		c.Fail(500, err.Error())
+	}
 }
 
 // 当在中间件在next方法时，控制权交给了下一个中间件
